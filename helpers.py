@@ -48,3 +48,20 @@ def make_glovevec(glovepath, max_features, embed_size, word_index, veclen=300):
             embedding_matrix[i] = embedding_vector
     print(embedding_matrix)
     return embedding_matrix
+
+def clean(words):
+    # remove numbers
+    words = re.sub("(^|\W)\d+($|\W)", " ", words)
+    # turn to lowercase
+    words = words.lower()
+    #remove \n
+    words = re.sub("\\n","", words)
+    # remove leaky elements like ip,user
+    words = re.sub("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}","", words)
+    #removing usernames
+    words = re.sub("\[\[.*\]","", words)
+    
+    
+    # TODO: Add normalization
+
+    return words
