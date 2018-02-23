@@ -2,8 +2,24 @@ import numpy as np
 
 # Keras
 from keras.preprocessing import text, sequence
+from keras.callbacks import Callback
 import pandas as pd
 
+from sklearn.metrics import roc_auc_score
+
+
+class RocAucEvaluation(Callback):
+    def __init__(self, validation_data=(), interval=1):
+        super(Callback, self).__init__()
+
+        self.interval = interval
+        self.X_val, self.y_val = validation_data 
+
+    def on_epoch_end(self, epoch, logs={}):
+        if epoch % self.interval == 0:
+            y_pred = self.model.predict(self.X_val, verbose=0)
+            score = roc_auc_score(self.y_val, y_pred)
+            print("\n ROC-AUC - epoch: %d - score: %.6f \n" % (epoch+1, score))
 
 def make_df(train_path, test_path, max_features, maxlen, list_classes):
     train = pd.read_csv(train_path)
@@ -13,9 +29,6 @@ def make_df(train_path, test_path, max_features, maxlen, list_classes):
     list_sentences_train = train["comment_text"].fillna("unknown").values
     y = train[list_classes].values
     list_sentences_test = test["comment_text"].fillna("unknown").values
-    
-    #list_sentences_train = hlp.clean(list_sentences_train)
-    #list_sentences_test = hlp.clean(list_sentences_test)
 
     tokenizer = text.Tokenizer(num_words=max_features)
     tokenizer.fit_on_texts(list(list_sentences_train))
@@ -65,3 +78,17 @@ def clean(words):
     # TODO: Add normalization
 
     return words
+def predict_and_save(model, test_data, epoch, filename, batch_size=1024):
+
+    list_classes = ["toxic", "severe_toxic", "obscene", "threat", "insult",
+                "identity_hate"]
+
+    model.load_weights('./modelckpts/.model.'+ epoch + '.hdf5')
+    print("Predicting with model...")
+    y_test = model.predict(test_data, batch_size=batch_size)
+
+    sample_submission = pd.read_csv("./input/sample_submission.csv")
+    sample_submission[list_classes] = y_test
+    print("Saving to submission file...")
+    sample_submission.to_csv("./submissions/" + filename + ".csv", index=False)
+    return

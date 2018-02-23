@@ -1,8 +1,16 @@
-
-
+import keras
 from keras import backend as K
 from keras.engine.topology import Layer
 from keras import initializers, regularizers, constraints
+
+from keras.models import Model
+from keras.layers import LSTM, Bidirectional, Dropout
+from keras.layers import Input, Dense, Embedding, SpatialDropout1D, concatenate
+from keras.layers import GRU, Bidirectional, GlobalAveragePooling1D, GlobalMaxPooling1D
+
+
+import warnings
+warnings.filterwarnings('ignore')
 
 # ATTENTION LAYER
 
@@ -75,13 +83,9 @@ class Attention(Layer):
     def compute_output_shape(self, input_shape):
         return input_shape[0],  self.features_dim
     
-# BIDIRECTIONAL LSTM    
+# BIDIRECTIONAL LSTM WITH ATTENTION  
 
-from keras.models import Model
-from keras.layers import Dense, Embedding, Input
-from keras.layers import LSTM, Bidirectional, Dropout
-
-def BidLstm(maxlen, max_features, embed_size, embedding_matrix):
+def BidAttentionLstm(maxlen, max_features, embed_size, embedding_matrix):
     inp = Input(shape=(maxlen, ))
     x = Embedding(max_features, embed_size, weights=[embedding_matrix],
                   trainable=False)(inp)
@@ -92,5 +96,29 @@ def BidLstm(maxlen, max_features, embed_size, embedding_matrix):
     x = Dropout(0.4)(x)
     x = Dense(6, activation="sigmoid")(x)
     model = Model(inputs=inp, outputs=x)
+    model.compile(loss='binary_crossentropy', optimizer='adam',
+              metrics=['accuracy'])
 
     return model
+
+# BIDIRECTIONAL GRU WITH MAXPOOL
+
+def BidMaxPoolGru(maxlen, max_features, embed_size, embedding_matrix):
+    inp = Input(shape=(maxlen, ))
+
+    x = Embedding(max_features, embed_size, weights=[embedding_matrix])(inp)
+    x = SpatialDropout1D(0.2)(x)
+    x = Bidirectional(GRU(512, return_sequences=True))(x)
+
+    avg_pool = GlobalAveragePooling1D()(x)
+    max_pool = GlobalMaxPooling1D()(x)
+
+    conc = concatenate([avg_pool, max_pool])
+    outp = Dense(6, activation="sigmoid")(conc)
+
+    model = Model(inputs=inp, outputs=outp)
+    model.compile(loss='binary_crossentropy',
+                    optimizer='adam',
+                    metrics=['accuracy'])
+    return model
+
