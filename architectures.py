@@ -89,8 +89,10 @@ def BidAttentionLstm(maxlen, max_features, embed_size, embedding_matrix):
     inp = Input(shape=(maxlen, ))
     x = Embedding(max_features, embed_size, weights=[embedding_matrix],
                   trainable=False)(inp)
-    x = Bidirectional(LSTM(512, return_sequences=True, dropout=0.2,
-                           recurrent_dropout=0.2))(x)
+    x = SpatialDropout1D(0.2)(x)
+
+    x = Bidirectional(LSTM(512, return_sequences=True, dropout=0.4,
+                           recurrent_dropout=0.4))(x)
     x = Attention(maxlen)(x)
     x = Dense(256, activation="relu")(x)
     x = Dropout(0.4)(x)
@@ -108,7 +110,8 @@ def BidMaxPoolGru(maxlen, max_features, embed_size, embedding_matrix):
 
     x = Embedding(max_features, embed_size, weights=[embedding_matrix])(inp)
     x = SpatialDropout1D(0.2)(x)
-    x = Bidirectional(GRU(512, return_sequences=True))(x)
+    x = Bidirectional(GRU(512, return_sequences=True, dropout=0.2,
+                           recurrent_dropout=0.2))(x)
 
     avg_pool = GlobalAveragePooling1D()(x)
     max_pool = GlobalMaxPooling1D()(x)
