@@ -1,4 +1,4 @@
-# toxic-comment-competition
+# Jigsaw/Kaggle Toxic Comment Competition (Ensemble Model)
 This is my attempt at the toxic competition on Kaggle by Jigsaw.
 
 https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/
