@@ -89,7 +89,7 @@ def make_df(train_path, test_path, max_features, maxlen, list_classes):
     
     word_index = tokenizer.word_index
 
-    return X_t, X_te, y, word_index
+    return X_t, X_te, y, word_index, tokenizer
 
 def make_glovevec(glovepath, max_features, embed_size, word_index, veclen=300):
     embeddings_index = {}
@@ -111,6 +111,21 @@ def make_glovevec(glovepath, max_features, embed_size, word_index, veclen=300):
             embedding_matrix[i] = embedding_vector
     print(embedding_matrix)
     return embedding_matrix
+
+def make_embed_vec(embedding_file, max_features, embed_size, word_index, tokenizer):
+    def get_coefs(word, *arr): return word, np.asarray(arr, dtype='float32')
+    embeddings_index = dict(get_coefs(*o.rstrip().rsplit(' ')) for o in open(embedding_file))
+
+    word_index = tokenizer.word_index
+    nb_words = min(max_features, len(word_index))
+    embedding_matrix = np.zeros((nb_words, embed_size))
+    for word, i in word_index.items():
+        if i >= max_features: continue
+        embedding_vector = embeddings_index.get(word)
+        if embedding_vector is not None: embedding_matrix[i] = embedding_vector
+            
+    return embedding_matrix
+
 
 
 def predict_and_save(model, test_data, epoch, filename, batch_size=1024):
